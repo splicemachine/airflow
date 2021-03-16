@@ -6,7 +6,7 @@ VERSION = 0.0.5
 all: build
 
 build:
-	docker build --no-cache -t $(NAME):$(VERSION) .
+	docker build -t $(NAME):$(VERSION) .
 	docker tag $(NAME):$(VERSION) $(NAME):latest
 
 push:
