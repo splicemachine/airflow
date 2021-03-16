@@ -1,0 +1,10 @@
+kubernetes
+pyodbc
+flask-bcrypt
+pymssql
+sqlalchemy
+psycopg2-binary
+pymysql
+splicemachinesa
+pyspark
+git+https://github.com/splicemachine/pysplice.git@2.6.0-k8
