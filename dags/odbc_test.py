@@ -35,34 +35,34 @@ default_args = {
 
 # @dag(default_args=default_args, schedule_interval='@daily', start_date=days_ago(2))
 # def odbc_test(fsid):
-#     @task
-def get_feature_set(fsid):
+@task
+def get_feature_set(fset):
     from splicemachinesa.pyodbc import splice_connect
     cnx = splice_connect('splice','admin', 'host.docker.internal', SSL=None)
     cursor = cnx.cursor()
-    print(fsid)
-    return list(cursor.execute(f'select * from sys.systables').fetchall()[0])
+    return len(cursor.execute(f'select * from {fset}').fetchall())
 
 #     get_feature_set(fsid)
 
-fsets = [1, 2] # Variable.get('feature_sets', deserialize_json=True)
-for fsid in fsets:
-    # globals()[f'ODBC_Test_{fsid}'] = odbc_test(fsid)
-    dag_id = f'ODBC_Test_{fsid}'
+fsets = Variable.get('feature_sets', deserialize_json=True, default_var={})
+for fset, args in fsets.items():
+    dag_id = f'ODBC_Test_{fset}'
     dag = DAG(
         dag_id,
         default_args=default_args,
         description='Test running queries against standalone db',
-        schedule_interval=timedelta(days=1),
+        # schedule_interval='@daily',
         start_date=days_ago(2),
         tags=['example'],
+        **args
     )
 
     with dag:
-        t1 = PythonOperator(
-            task_id='query_feature_set',
-            python_callable=get_feature_set,
-            op_kwargs={'fsid': fsid}
-        )
+        # t1 = PythonOperator(
+        #     task_id='query_feature_set',
+        #     python_callable=get_feature_set,
+        #     op_kwargs={'fsid': fsid}
+        # )
+        get_feature_set(fset)
 
     globals()[dag_id] = dag

@@ -7,6 +7,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator, PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
+from airflow.decorators import dag, task
 # These args will get passed on to each operator
 # You can override them on a per-task basis during operator initialization
 default_args = {
@@ -32,7 +33,8 @@ default_args = {
     # 'trigger_rule': 'all_success'
 }
 
-def create_table(id):
+@task
+def create_table(fset: str):
     #Begin spark session 
     from pyspark.sql import SparkSession
     spark = SparkSession.builder.getOrCreate()
@@ -40,28 +42,36 @@ def create_table(id):
     from splicemachine.spark import ExtPySpliceContext
     splice = ExtPySpliceContext(spark, JDBC_URL='jdbc:splice://host.docker.internal:1527/splicedb;user=splice;password=admin', kafkaServers='host.docker.internal:9092')
 
-    table = f'splice.foo{id}'
+    schema, table = fset.split('.')
 
-    if not splice.tableExists(table): 
+    test_table = f'splice.{table}_test'
+
+    if not splice.tableExists(test_table): 
         df = splice.df('select * from sys.systables')
-        splice.createTable(df, table, to_upper=False)
-        splice.insert(df, table, to_upper=False)
-    return splice.df(f'select * from {table}').count()
+        splice.createTable(df, test_table, to_upper=False)
+        splice.insert(df, test_table, to_upper=False)
+    return splice.df(f'select * from {test_table}').count()
 
-fsets = Variable.get('feature_sets', deserialize_json=True)
-for id in fsets:
+fsets = Variable.get('feature_sets', deserialize_json=True, default_var={})
+for fset, args in fsets.items():
+    dag_id = f'Spark_Test_{fset}'
     dag = DAG(
-        f'Spark_Test_{id}',
+        dag_id,
         default_args=default_args,
         description='Test running queries against standalone db',
-        schedule_interval=timedelta(days=1),
+        # schedule_interval='@daily',
         start_date=days_ago(2),
         tags=['example'],
+        **args
     )
 
-    t1 = PythonOperator(
-        task_id='create_table',
-        python_callable=create_table,
-        op_kwargs={'id': id},
-        dag=dag,
-    )
+    with dag:    
+    # t1 = PythonOperator(
+    #     task_id='create_table',
+    #     python_callable=create_table,
+    #     op_kwargs={'fset': fset},
+    #     dag=dag,
+    # )
+        create_table(fset)
+
+    globals()[dag_id] = dag
