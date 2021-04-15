@@ -2,10 +2,10 @@ import os
 
 from airflow import configuration as conf
 
-LOG_LEVEL = conf.get('core', 'LOGGING_LEVEL').upper()
-LOG_FORMAT = conf.get('core', 'log_format')
+LOG_LEVEL = conf.get('logging', 'LOGGING_LEVEL').upper()
+LOG_FORMAT = conf.get('logging', 'log_format')
 
-BASE_LOG_FOLDER = conf.get('core', 'BASE_LOG_FOLDER')
+BASE_LOG_FOLDER = conf.get('logging', 'BASE_LOG_FOLDER')
 PROCESSOR_LOG_FOLDER = conf.get('scheduler', 'child_process_log_directory')
 
 FILENAME_TEMPLATE = '{{ ti.dag_id }}/{{ ti.task_id }}/{{ ts }}/{{ try_number }}.log'

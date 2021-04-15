@@ -1,0 +1,18 @@
+kubernetes
+# apache-airflow==2.0.1
+# apache-airflow[kubernetes]
+# apache-airflow[gcp]
+# apache-airflow[gcp-api]
+# apache-airflow[crypto]
+# apache-airflow[elasticsearch]
+apache-airflow[password]
+pyodbc
+flask-bcrypt
+pymssql
+sqlalchemy
+psycopg2-binary
+pymysql
+elasticsearch
+elasticsearch_dsl
+apache-airflow-backport-providers-elasticsearch
+werkzeug==0.16.0

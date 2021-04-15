@@ -42,8 +42,6 @@ def get_feature_set(fset):
     cursor = cnx.cursor()
     return len(cursor.execute(f'select * from {fset}').fetchall())
 
-#     get_feature_set(fsid)
-
 fsets = Variable.get('feature_sets', deserialize_json=True, default_var={})
 for fset, args in fsets.items():
     dag_id = f'ODBC_Test_{fset}'
@@ -54,6 +52,7 @@ for fset, args in fsets.items():
         # schedule_interval='@daily',
         start_date=days_ago(2),
         tags=['example'],
+        access_control={'User': {'can_dag_edit', 'can_dag_read'}},
         **args
     )
 

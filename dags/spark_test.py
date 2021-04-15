@@ -62,16 +62,11 @@ for fset, args in fsets.items():
         # schedule_interval='@daily',
         start_date=days_ago(2),
         tags=['example'],
+        access_control={'Admin': {'can_dag_edit', 'can_dag_read'}},
         **args
     )
 
     with dag:    
-    # t1 = PythonOperator(
-    #     task_id='create_table',
-    #     python_callable=create_table,
-    #     op_kwargs={'fset': fset},
-    #     dag=dag,
-    # )
         create_table(fset)
 
     globals()[dag_id] = dag
