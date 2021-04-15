@@ -59,4 +59,4 @@ COPY airflow/build/requirements.txt /tmp/requirements.txt
 #Python Package Dependencies for Airflow
 RUN pip install --user -r /tmp/requirements.txt
 
-COPY ../dags/* ${AIRFLOW_HOME}/dags
+COPY dags/* ${AIRFLOW_HOME}/dags

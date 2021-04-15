@@ -50,4 +50,4 @@ EXPOSE 9876
 #Python Package Dependencies for Airflow
 RUN pip install --user -r /tmp/requirements.txt
 
-COPY ../dags/* ${AIRFLOW_HOME}/dags
+COPY dags/* ${AIRFLOW_HOME}/dags
