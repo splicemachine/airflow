@@ -50,4 +50,6 @@ EXPOSE 9876
 #Python Package Dependencies for Airflow
 RUN pip install --user -r /tmp/requirements.txt
 
+COPY airflow-worker/build/templates/pod.yaml ${AIRFLOW_HOME}/config/
+
 COPY dags/* ${AIRFLOW_HOME}/dags/
