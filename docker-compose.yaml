@@ -84,7 +84,7 @@ services:
   
   airflow-worker:
     <<: *airflow-common
-    image: splicemachine/airflow-worker:0.0.5_mn001
+    image: splicemachine/airflow-worker:0.0.5_mn002
     build:
       context: ./
       dockerfile: ./airflow-worker/Dockerfile
