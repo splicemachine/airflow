@@ -18,10 +18,6 @@ RUN \
     curl -kLs https://jpanko-splice.s3.amazonaws.com/eNSDS-Spark3.0.1/splice_spark2-3.1.0.2002-shaded.jar                                                   -o $SRC_HOME/eNSDS/splice_spark2.jar && \
     curl -kLs https://repository.cloudera.com/artifactory/cloudera-repos/org/apache/kafka/kafka-clients/2.2.1-cdh6.3.0/kafka-clients-2.2.1-cdh6.3.0.jar     -o $SRC_HOME/eNSDS/jars/kafka-clients.jar
 
-COPY airflow-worker/build/requirements.txt /tmp/requirements.txt
-# COPY build/config/__init__.py /usr/local/airflow/config/__init__.py
-# COPY build/config/log_config.py /usr/local/airflow/config/log_config.py
-
 RUN apt-get update && apt-get install --yes \
     sudo \
     git \
@@ -44,12 +40,15 @@ RUN \
     rm jdk-8u121-linux-x64.tar.gz && \
     chmod +x $JAVA_HOME/bin/*
 
+COPY airflow-worker/build/requirements.txt /tmp/requirements.txt
+COPY airflow-worker/build/config/__init__.py ${AIRFLOW_HOME}/config/__init__.py
+COPY airflow/build/config/log_config.py ${AIRFLOW_HOME}/config/log_config.py
+COPY airflow/build/config/es_task_handler.py ${AIRFLOW_HOME}/config/es_task_handler.py
+
 USER airflow
 
 EXPOSE 9876
 #Python Package Dependencies for Airflow
 RUN pip install --user -r /tmp/requirements.txt
-
-COPY airflow-worker/build/templates/pod.yaml ${AIRFLOW_HOME}/config/
 
 COPY dags/* ${AIRFLOW_HOME}/dags/

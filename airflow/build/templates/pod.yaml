@@ -14,7 +14,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: airflow-secrets
-              key: fernet-key
+              key: fernet_key
         - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
           valueFrom:
             secretKeyRef:
@@ -49,7 +49,7 @@ spec:
   serviceAccountName: airflow
   volumes:
     - name: airflow-configmap
-        configMap:
+      configMap:
         name: airflow-configmap
     - name: airflow-dags
-        emptyDir: {}
+      emptyDir: {}

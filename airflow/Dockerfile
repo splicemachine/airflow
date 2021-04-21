@@ -54,9 +54,14 @@ RUN cd ${AIRFLOW_HOME} && \
 # COPY airflow/build/config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 COPY airflow/build/config/__init__.py $SRC_HOME/config/__init__.py
 COPY airflow/build/config/log_config.py $SRC_HOME/config/log_config.py
+COPY airflow/build/config/es_task_handler.py $SRC_HOME/config/es_task_handler.py
+COPY airflow/build/config/webserver_config.py $SRC_HOME/webserver_config.py
 COPY airflow/build/requirements.txt /tmp/requirements.txt
+COPY airflow/build/templates/pod.yaml $SRC_HOME/config/pod.yaml
 
 #Python Package Dependencies for Airflow
 RUN pip install --user -r /tmp/requirements.txt
 
 COPY dags/* ${AIRFLOW_HOME}/dags/
+
+ENV PYTHONPATH "${PYTHONPATH}:/opt/airflow"

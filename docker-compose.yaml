@@ -39,7 +39,7 @@
 version: '3'
 x-airflow-common:
   &airflow-common
-  image: splicemachine/airflow:0.0.5_mn006
+  image: splicemachine/airflow:0.0.5_mn033
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -70,7 +70,6 @@ x-airflow-common:
 services:
   airflow:
     <<: *airflow-common
-    image: splicemachine/airflow:0.0.5_mn006
     command: version
     environment:
       <<: *airflow-common-env
@@ -84,7 +83,7 @@ services:
   
   airflow-worker:
     <<: *airflow-common
-    image: splicemachine/airflow-worker:0.0.5_mn002
+    image: splicemachine/airflow-worker:0.0.5_mn003
     build:
       context: ./
       dockerfile: ./airflow-worker/Dockerfile
