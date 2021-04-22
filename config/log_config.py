@@ -49,29 +49,15 @@ LOGGING_CONFIG = {
         },
     },
     'loggers': {
-        '': {
-            'handlers': ['task','console'],
-            'level': LOG_LEVEL
-        },
-        'airflow': {
-            'handlers': ['task','console'],
-            'level': LOG_LEVEL,
-            'propagate': False,
-        },
         'airflow.processor': {
             'handlers': ['processor'],
             'level': LOG_LEVEL,
             'propagate': True,
         },
         'airflow.task': {
-            'handlers': ['task','console'],
+            'handlers': ['task'],
             'level': LOG_LEVEL,
             'propagate': False,
-        },
-        'airflow.task_runner': {
-            'handlers': ['task','console'],
-            'level': LOG_LEVEL,
-            'propagate': True,
         },
         'flask_appbuilder': {
             'handler': ['console'],

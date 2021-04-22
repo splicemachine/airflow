@@ -39,7 +39,7 @@
 version: '3'
 x-airflow-common:
   &airflow-common
-  image: splicemachine/airflow:0.0.5_mn033
+  image: splicemachine/airflow:0.0.5
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -83,7 +83,7 @@ services:
   
   airflow-worker:
     <<: *airflow-common
-    image: splicemachine/airflow-worker:0.0.5_mn003
+    image: splicemachine/airflow-worker:0.0.5
     build:
       context: ./
       dockerfile: ./airflow-worker/Dockerfile
@@ -131,16 +131,6 @@ services:
     <<: *airflow-common
     restart: always
     entrypoint: /opt/airflow/scripts/scheduler-entrypoint.sh
-
-  # airflow-init:
-  #   <<: *airflow-common
-  #   command: version
-  #   environment:
-  #     <<: *airflow-common-env
-  #     _AIRFLOW_DB_UPGRADE: 'true'
-  #     _AIRFLOW_WWW_USER_CREATE: 'true'
-  #     _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-  #     _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
 
   flower:
     <<: *airflow-common

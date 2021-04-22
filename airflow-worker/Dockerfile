@@ -8,8 +8,7 @@ ENV SPARK_CONF_DIR=/etc/spark/conf
 ENV JAVA_HOME="/opt/jdk"
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-COPY airflow-worker/build/spark_config/spark.log4j.properties ${SPARK_CONF_DIR}/
-COPY airflow-worker/build/spark_config/spark-defaults.conf ${SPARK_CONF_DIR}
+COPY airflow-worker/build/spark_config/* ${SPARK_CONF_DIR}/
 
 RUN \
     mkdir -p $SRC_HOME/eNSDS            && \
@@ -30,8 +29,6 @@ RUN apt-get update && apt-get install --yes \
     unixodbc \
     unixodbc-dev \
     iodbc
-    # wget \
-    # zlib1g-dev
 
 RUN \
     curl --insecure -o jdk-8u121-linux-x64.tar.gz https://s3.amazonaws.com/splice-jdks/jdk-8u121-linux-x64.tar.gz && \
@@ -41,9 +38,7 @@ RUN \
     chmod +x $JAVA_HOME/bin/*
 
 COPY airflow-worker/build/requirements.txt /tmp/requirements.txt
-COPY airflow-worker/build/config/__init__.py ${AIRFLOW_HOME}/config/__init__.py
-COPY airflow/build/config/log_config.py ${AIRFLOW_HOME}/config/log_config.py
-COPY airflow/build/config/es_task_handler.py ${AIRFLOW_HOME}/config/es_task_handler.py
+COPY config/* ${AIRFLOW_HOME}/config/
 
 USER airflow
 
@@ -52,3 +47,5 @@ EXPOSE 9876
 RUN pip install --user -r /tmp/requirements.txt
 
 COPY dags/* ${AIRFLOW_HOME}/dags/
+
+ENV PYTHONPATH "${PYTHONPATH}:${AIRFLOW_HOME}"

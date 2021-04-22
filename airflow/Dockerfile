@@ -2,11 +2,6 @@ FROM apache/airflow:2.0.1
 USER root
 
 ENV SRC_HOME=/opt/airflow
-# ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME}
-
-#To prevent Kubernetes API from timing out while running the airflow scheduler
-# ENV AIRFLOW__KUBERNETES_ENVIRONMENT_VARIABLES__KUBE_CLIENT_REQUEST_TIMEOUT_SEC=50
-# ENV AIRFLOW__ELASTICSEARCH__LOG_ID_TEMPLATE={{dag_id}}-{{task_id}}-{{execution_date}}-{{try_number}}
 
 RUN mkdir -p ${AIRFLOW_HOME}/scripts
 COPY airflow/scripts/* ${AIRFLOW_HOME}/scripts/
@@ -50,14 +45,9 @@ RUN cd ${AIRFLOW_HOME} && \
     chmod +x -R ${AIRFLOW_HOME}/logs/scheduler && \
     chmod +x -R ${AIRFLOW_HOME}/dags
 
-#DAGS
-# COPY airflow/build/config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
-COPY airflow/build/config/__init__.py $SRC_HOME/config/__init__.py
-COPY airflow/build/config/log_config.py $SRC_HOME/config/log_config.py
-COPY airflow/build/config/es_task_handler.py $SRC_HOME/config/es_task_handler.py
+COPY config/* $SRC_HOME/config/
 COPY airflow/build/config/webserver_config.py $SRC_HOME/webserver_config.py
 COPY airflow/build/requirements.txt /tmp/requirements.txt
-COPY airflow/build/templates/pod.yaml $SRC_HOME/config/pod.yaml
 
 #Python Package Dependencies for Airflow
 RUN pip install --user -r /tmp/requirements.txt
