@@ -10,13 +10,6 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 COPY airflow-worker/build/spark_config/* ${SPARK_CONF_DIR}/
 
-RUN \
-    mkdir -p $SRC_HOME/eNSDS            && \
-    mkdir -p $SRC_HOME/eNSDS/jars       && \
-    curl -kLs http://repository.splicemachine.com/nexus/content/groups/public/com/splicemachine/db-client/$sm_version/db-client-${sm_version}.jar           -o $SRC_HOME/eNSDS/jars/db-client.jar && \
-    curl -kLs https://jpanko-splice.s3.amazonaws.com/eNSDS-Spark3.0.1/splice_spark2-3.1.0.2002-shaded.jar                                                   -o $SRC_HOME/eNSDS/splice_spark2.jar && \
-    curl -kLs https://repository.cloudera.com/artifactory/cloudera-repos/org/apache/kafka/kafka-clients/2.2.1-cdh6.3.0/kafka-clients-2.2.1-cdh6.3.0.jar     -o $SRC_HOME/eNSDS/jars/kafka-clients.jar
-
 RUN apt-get update && apt-get install --yes \
     sudo \
     git \
