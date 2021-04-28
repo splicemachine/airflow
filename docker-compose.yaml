@@ -39,7 +39,7 @@
 version: '3'
 x-airflow-common:
   &airflow-common
-  image: splicemachine/airflow:0.0.5
+  image: splicemachine/airflow:0.0.5_mn005
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -56,8 +56,12 @@ x-airflow-common:
     AIRFLOW__WEBSERVER__WEB_SERVER_PORT: 9876
     AIRFLOW__WEBSERVER__ENDPOINT_URL: http://localhost:9876
     SPLICE_ADMIN_PWD: admin
+    SPLICE_JUPYTER_USER: mlmanager
+    SPLICE_JUPYTER_PASSWORD: admin
+    SPLICE_DB_HOST: host.docker.internal
+    FS_URL: "http://host.docker.internal:8000"
   volumes:
-    # - ./dags:/opt/airflow/dags
+    - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
@@ -83,7 +87,7 @@ services:
   
   airflow-worker:
     <<: *airflow-common
-    image: splicemachine/airflow-worker:0.0.5
+    image: splicemachine/airflow-worker:0.0.5_mn004
     build:
       context: ./
       dockerfile: ./airflow-worker/Dockerfile
