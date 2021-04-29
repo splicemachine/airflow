@@ -53,15 +53,6 @@ def run_sql(sql, interval):
     print(f'insert for interval {interval} finished successfully')
     c.commit()
 
-def handle_run(sql, interval, event):
-    if event.is_set():
-        return
-    try:
-        run_sql(sql, interval)
-    except Exception as e:
-        event.set()
-        raise e
-
 # def check_for_failure(temp_table):
 #     c = get_cursor()
 #     previous_failure = c.execute(f'select * from featurestore.{temp_table}').fetchone()[0]
@@ -128,10 +119,8 @@ def do_backfill(sql, intervals):
     params = get_current_context()['params']
     schema = params['schema']
     table = params['table']
-    
-    event = mp.Event()
 
-    args = [(sql, i, event) for i in intervals[:-1]]
+    args = [(sql, i) for i in intervals[:-1]]
 
     args[3] = ('adsfadfvav', args[3][1])
 
@@ -139,16 +128,16 @@ def do_backfill(sql, intervals):
         replace('ASOF_TS','LAST_UPDATE_TS').\
         replace('INGEST_TS,', '').\
         replace('CURRENT_TIMESTAMP,','')
-    args.append((serving_sql, intervals[-1], event))
+    args.append((serving_sql, intervals[-1]))
 
-    try:
-        with mp.Pool(10) as p:
-            p.starmap(handle_run, args)
-    except Exception as e:
-        print(str(e))
-        cleanup(schema, table)
-        raise AirflowException("An error occurred during the backfill process. "
-                                "The Feature Set tables have been cleared.")
+    with mp.Pool(10) as p:
+        try:
+            p.starmap(run_sql, args)
+        except Exception as e:
+            print(str(e))
+            cleanup(schema, table)
+            raise AirflowException("An error occurred during the backfill process. "
+                                    "The Feature Set tables have been cleared.")
 # @task
 # def populate_serving_table(sql, interval):
 
