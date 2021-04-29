@@ -62,22 +62,6 @@ def handle_runs(sql, interval):
         with failed.get_lock():
             failed.value = True
         raise e
-# def check_for_failure(temp_table):
-#     c = get_cursor()
-#     previous_failure = c.execute(f'select * from featurestore.{temp_table}').fetchone()[0]
-#     c.commit()
-#     return previous_failure
-
-# def handle_interval(sql, interval, temp_table):
-#     if check_for_failure(temp_table):
-#         raise Exception(f'Previous backfill interval failed - will not attempt for interval {interval}')
-#     try:
-#         run_sql(sql, interval)
-#     except Exception as e:
-#         c = get_cursor()
-#         c.execute(f'update featurestore.{temp_table} set failed=true')
-#         c.commit()
-#         raise e
 
 @task(multiple_outputs=True)
 def get_sql():
@@ -99,19 +83,6 @@ def get_sql():
         "params": intervals,
         "latest": latest
     }
-
-# @task
-# def create_temp_table():
-#     from uuid import uuid1
-
-#     s = str(uuid1())
-#     cursor = get_cursor()
-
-#     cursor.execute(f'create table featurestore.{s} (failed boolean primary key)')
-#     cursor.execute(f'insert into featurestore.{s} values false')
-#     cursor.commit()
-
-#     return s
 
 def cleanup(schema, table):
     print("Error encountered. Resetting...")
@@ -136,8 +107,6 @@ def do_backfill(sql, intervals):
 
     args = [(sql, i) for i in intervals[:-1]]
 
-    args[3] = ('adsfadfvav', args[3][1])
-
     serving_sql = sql.replace(f'{schema}.{table}_HISTORY', f'{schema}.{table}').\
         replace('ASOF_TS','LAST_UPDATE_TS').\
         replace('INGEST_TS,', '').\
@@ -154,32 +123,6 @@ def do_backfill(sql, intervals):
             cleanup(schema, table)
             raise AirflowException("An error occurred during the backfill process. "
                                     "The Feature Set tables have been cleared.")
-# @task
-# def populate_serving_table(sql, interval):
-
-#     sql = sql.replace(f'{schema}.{table}_HISTORY', f'{schema}.{table}').\
-#             replace('ASOF_TS','LAST_UPDATE_TS').\
-#             replace('INGEST_TS,', '').\
-#             replace('CURRENT_TIMESTAMP,','')
-#     run_sql(sql, interval)
-
-# @task(trigger_rule=TriggerRule.ONE_FAILED)
-# def cleanup():
-#     params = get_current_context()['params']
-#     schema = params['schema']
-#     table = params['table']
-
-#     c = get_cursor()
-#     print(f'truncating table {schema}.{table}')
-#     c.execute(f'truncate table {schema}.{table}')
-#     print(f'truncating table {schema}.{table}_HISTORY')
-#     c.execute(f'truncate table {schema}.{table}_HISTORY')
-#     c.commit()
-
-# @task(retries=0)
-# def cause_failure():
-#     raise AirflowException("The backfill process failed. Marking DAG as failed...")
-
 dag = DAG(
     'Feature_Set_Backfill',
     default_args=default_args,
