@@ -53,6 +53,15 @@ def run_sql(sql, interval):
     print(f'insert for interval {interval} finished successfully')
     c.commit()
 
+def handle_runs(sql, interval):
+    if failed.value:
+        return
+    try:
+        run_sql(sql, interval)
+    except Exception as e:
+        with failed.get_lock():
+            failed.value = True
+        raise e
 # def check_for_failure(temp_table):
 #     c = get_cursor()
 #     previous_failure = c.execute(f'select * from featurestore.{temp_table}').fetchone()[0]
@@ -113,9 +122,14 @@ def cleanup(schema, table):
     c.execute(f'truncate table {schema}.{table}_HISTORY')
     c.commit()
 
+def init_globals(value):
+    global failed
+    failed = value
+
 @task
 def do_backfill(sql, intervals):
     import multiprocessing as mp
+    from ctypes import c_bool
     params = get_current_context()['params']
     schema = params['schema']
     table = params['table']
@@ -130,9 +144,11 @@ def do_backfill(sql, intervals):
         replace('CURRENT_TIMESTAMP,','')
     args.append((serving_sql, intervals[-1]))
 
-    with mp.Pool(10) as p:
+    failed = mp.Value(c_bool, False)
+
+    with mp.Pool(10, initializer=init_globals, initargs=(failed,)) as p:
         try:
-            p.starmap(run_sql, args)
+            p.starmap(handle_runs, args)
         except Exception as e:
             print(str(e))
             cleanup(schema, table)
@@ -174,6 +190,6 @@ dag = DAG(
 )
 
 with dag:
-        sql = get_sql()
-        do_backfill(sql['statement'], sql['params']) # >> cleanup() >> cause_failure()
+    sql = get_sql()
+    do_backfill(sql['statement'], sql['params']) # >> cleanup() >> cause_failure()
         
