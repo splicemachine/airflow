@@ -17,8 +17,8 @@ default_args = {
     'email': ['airflow@example.com'],
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 3,
-    'retry_delay': timedelta(minutes=5),
+    'retries': 2,
+    'retry_delay': timedelta(minutes=1),
     # 'queue': 'bash_queue',
     # 'pool': 'backfill',
     # 'priority_weight': 10,
@@ -104,38 +104,65 @@ def get_sql():
 
 #     return s
 
-@task(retries=1)
-def do_backfill(sql, intervals):
-    import multiprocessing as mp
-
-    params = [(sql, i) for i in intervals]
-
-    with mp.Pool(10) as p:
-        p.starmap(run_sql, params)
-
-@task
-def populate_serving_table(sql, interval):
-    params = get_current_context()['params']
-    schema = params['schema']
-    table = params['table']
-    sql = sql.replace(f'{schema}.{table}_HISTORY', f'{schema}.{table}').\
-            replace('ASOF_TS','LAST_UPDATE_TS').\
-            replace('INGEST_TS,', '').\
-            replace('CURRENT_TIMESTAMP,','')
-    run_sql(sql, interval)
-
-@task(trigger_rule=TriggerRule.ONE_FAILED)
-def cleanup():
-    params = get_current_context()['params']
-    schema = params['schema']
-    table = params['table']
-
+def cleanup(schema, table):
+    print("Error encountered. Resetting...")
     c = get_cursor()
     print(f'truncating table {schema}.{table}')
     c.execute(f'truncate table {schema}.{table}')
     print(f'truncating table {schema}.{table}_HISTORY')
     c.execute(f'truncate table {schema}.{table}_HISTORY')
     c.commit()
+
+@task()
+def do_backfill(sql, intervals):
+    import multiprocessing as mp
+    params = get_current_context()['params']
+    schema = params['schema']
+    table = params['table']
+
+    args = [(sql, i) for i in intervals[:-1]]
+
+    args[3] = ('adsfadfvav', args[3][1])
+
+    serving_sql = sql.replace(f'{schema}.{table}_HISTORY', f'{schema}.{table}').\
+        replace('ASOF_TS','LAST_UPDATE_TS').\
+        replace('INGEST_TS,', '').\
+        replace('CURRENT_TIMESTAMP,','')
+    args.append((serving_sql, intervals[-1]))
+
+    try:
+        with mp.Pool(10) as p:
+            p.starmap(run_sql, params)
+    except Exception as e:
+        print(str(e))
+        cleanup(schema, table)
+        raise AirflowException("An error occurred during the backfill process. "
+                                "The Feature Set tables have been cleared.")
+# @task
+# def populate_serving_table(sql, interval):
+
+#     sql = sql.replace(f'{schema}.{table}_HISTORY', f'{schema}.{table}').\
+#             replace('ASOF_TS','LAST_UPDATE_TS').\
+#             replace('INGEST_TS,', '').\
+#             replace('CURRENT_TIMESTAMP,','')
+#     run_sql(sql, interval)
+
+# @task(trigger_rule=TriggerRule.ONE_FAILED)
+# def cleanup():
+#     params = get_current_context()['params']
+#     schema = params['schema']
+#     table = params['table']
+
+#     c = get_cursor()
+#     print(f'truncating table {schema}.{table}')
+#     c.execute(f'truncate table {schema}.{table}')
+#     print(f'truncating table {schema}.{table}_HISTORY')
+#     c.execute(f'truncate table {schema}.{table}_HISTORY')
+#     c.commit()
+
+# @task(retries=0)
+# def cause_failure():
+#     raise AirflowException("The backfill process failed. Marking DAG as failed...")
 
 dag = DAG(
     'Feature_Set_Backfill',
@@ -147,6 +174,6 @@ dag = DAG(
 )
 
 with dag:
-    sql = get_sql()
-    do_backfill(sql['statement'], sql['params'])
-    populate_serving_table(sql['statement'], sql['latest'])
+        sql = get_sql()
+        do_backfill(sql['statement'], sql['params']) # >> cleanup() >> cause_failure()
+        
