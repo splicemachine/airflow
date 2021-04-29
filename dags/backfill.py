@@ -113,7 +113,7 @@ def cleanup(schema, table):
     c.execute(f'truncate table {schema}.{table}_HISTORY')
     c.commit()
 
-@task()
+@task
 def do_backfill(sql, intervals):
     import multiprocessing as mp
     params = get_current_context()['params']
@@ -132,7 +132,7 @@ def do_backfill(sql, intervals):
 
     try:
         with mp.Pool(10) as p:
-            p.starmap(run_sql, params)
+            p.starmap(run_sql, args)
     except Exception as e:
         print(str(e))
         cleanup(schema, table)
