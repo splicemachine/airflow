@@ -1,5 +1,4 @@
 from datetime import timedelta
-from airflow.utils import trigger_rule
 from retrying import retry
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG, AirflowException
@@ -8,7 +7,6 @@ from airflow import DAG, AirflowException
 from airflow.operators.python import task, get_current_context
 from airflow.utils.dates import days_ago
 from airflow.decorators import dag
-from airflow.utils.trigger_rule import TriggerRule
 # These args will get passed on to each operator
 # You can override them on a per-task basis during operator initialization
 default_args = {
@@ -52,6 +50,7 @@ def run_sql(sql, interval):
     c.execute(sql.format(backfill_asof_ts=interval))
     print(f'insert for interval {interval} finished successfully')
     c.commit()
+    c.close()
 
 def handle_runs(sql, interval):
     if failed.value:
@@ -77,11 +76,9 @@ def get_sql():
     sql = fs.get_backfill_sql(schema, table)
     print("Getting backfill intervals")
     intervals = fs.get_backfill_intervals(schema, table)
-    latest = intervals.pop()
     return {
         "statement": sql,
-        "params": intervals,
-        "latest": latest
+        "params": intervals
     }
 
 def cleanup(schema, table):
@@ -134,5 +131,5 @@ dag = DAG(
 
 with dag:
     sql = get_sql()
-    do_backfill(sql['statement'], sql['params']) # >> cleanup() >> cause_failure()
+    do_backfill(sql['statement'], sql['params'])
         
