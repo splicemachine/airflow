@@ -15,6 +15,7 @@ spark_defaults = {
         "spark.kubernetes.executor.label.component": "sparkexec",
         "spark.kubernetes.namespace": env_vars['SPLICE_NAMESPACE'],
         "spark.executorEnv.TZ": env_vars['TZ'],
-        "spark.blacklist.enabled": False
+        "spark.blacklist.enabled": False,
+        "spark.jars.packages": "org.apache.hadoop:hadoop-common:2.9.0,org.apache.hadoop:hadoop-hdfs:2.9.0"
     }
 }
