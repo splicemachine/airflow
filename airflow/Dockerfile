@@ -39,11 +39,13 @@ RUN cd ${AIRFLOW_HOME} && \
     mkdir -p ${AIRFLOW_HOME}/config && \
     mkdir -p ${AIRFLOW_HOME}/logs/scheduler && \
     mkdir -p ${AIRFLOW_HOME}/dags && \
+    mkdir -p ${AIRFLOW_HOME}/spark_apps && \
     mkdir -p /var/log/supervisor && \
     chmod +x -R ${AIRFLOW_HOME}/logs && \
     chmod +x -R ${AIRFLOW_HOME}/config && \
     chmod +x -R ${AIRFLOW_HOME}/logs/scheduler && \
-    chmod +x -R ${AIRFLOW_HOME}/dags
+    chmod +x -R ${AIRFLOW_HOME}/dags && \
+    chmod +x -R ${AIRFLOW_HOME}/spark_apps
 
 COPY config/* $SRC_HOME/config/
 COPY airflow/build/config/webserver_config.py $SRC_HOME/webserver_config.py
@@ -53,5 +55,17 @@ COPY airflow/build/requirements.txt /tmp/requirements.txt
 RUN pip install --user -r /tmp/requirements.txt
 
 COPY dags/* ${AIRFLOW_HOME}/dags/
+COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
 
 ENV PYTHONPATH "${PYTHONPATH}:/opt/airflow"
+
+ENV AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG=0.0.5_mn017
+ENV AIRFLOW__KUBERNETES__DELETE_WORKER_PODS=False
+ENV SPARK_HOST="k8s://kubernetes.default.svc.cluster.local"
+ENV SPARK_PORT=443
+ENV AIRFLOW__KUBERNETES__IN_CLUSTER=False
+ENV AIRFLOW__KUBERNETES__CLUSTER_CONTEXT=test
+ENV SPARK_DOCKER_IMAGE="splicemachine/sm_k8_spark-3.0.0:latest"
+ENV SPARK_REL_NAME="splicedb"
+ENV SPLICE_NAMESPACE="test"
+ENV TZ="UTC"

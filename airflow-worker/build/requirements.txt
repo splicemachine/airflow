@@ -9,3 +9,4 @@ splicemachinesa
 pyspark
 retrying
 git+https://github.com/splicemachine/pysplice.git
+apache-airflow-providers-apache-spark

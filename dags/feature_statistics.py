@@ -1,13 +1,16 @@
 from datetime import timedelta
+import os
 
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
 
 # Operators; we need this to operate!
-from airflow.operators.python import PythonOperator, PythonVirtualenvOperator
+from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
 from airflow.decorators import dag, task
+from config.spark_config import spark_defaults
+
 # These args will get passed on to each operator
 # You can override them on a per-task basis during operator initialization
 default_args = {
@@ -33,40 +36,30 @@ default_args = {
     # 'trigger_rule': 'all_success'
 }
 
-@task
-def create_table(fset: str):
-    #Begin spark session 
-    from pyspark.sql import SparkSession
-    spark = SparkSession.builder.getOrCreate()
-
-    from splicemachine.spark import ExtPySpliceContext
-    splice = ExtPySpliceContext(spark, JDBC_URL='jdbc:splice://host.docker.internal:1527/splicedb;user=splice;password=admin', kafkaServers='host.docker.internal:9092')
-
-    schema, table = fset.split('.')
-
-    test_table = f'splice.{table}_test'
-
-    if not splice.tableExists(test_table): 
-        df = splice.df('select * from sys.systables')
-        splice.createTable(df, test_table, to_upper=False)
-        splice.insert(df, test_table, to_upper=False)
-    return splice.df(f'select * from {test_table}').count()
-
 fsets = Variable.get('feature_sets', deserialize_json=True, default_var={})
 for fset, args in fsets.items():
-    dag_id = f'Spark_Test_{fset}'
+    dag_id = f'{fset}_Calculate_Feature_Statistics'
     dag = DAG(
         dag_id,
         default_args=default_args,
-        description='Test running queries against standalone db',
+        description=f'Calculate feature statistics for features in {fset}',
         # schedule_interval='@daily',
-        start_date=days_ago(2),
-        tags=['example'],
-        access_control={'Admin': {'can_dag_edit', 'can_dag_read'}},
+        start_date=days_ago(1),
+        catchup=False,
+        tags=['statistics'],
         **args
     )
 
-    with dag:    
-        create_table(fset)
+    with dag:
+        calculate_statistics_task = SparkSubmitOperator(
+            application="/opt/airflow/spark_apps/calculate_feature_statistics.py", 
+            task_id="calculate_statistics",
+            conn_id="splice_spark",
+            env_vars={k: os.environ[k] for k in ['SPLICE_JUPYTER_USER', 'SPLICE_JUPYTER_PASSWORD', 'SPLICE_DB_HOST', 'SPLICE_KAFKA_HOST']},
+            application_args=[fset],
+            **spark_defaults
+            # conf={"spark.driver.extraJavaOptions": "-Dlog4j.configuration=file:spark.log4j.properties"},
+            # files="/etc/spark/conf/spark.log4j.properties"
+        )
 
     globals()[dag_id] = dag

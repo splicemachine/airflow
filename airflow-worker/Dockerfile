@@ -33,6 +33,8 @@ RUN \
 COPY airflow-worker/build/requirements.txt /tmp/requirements.txt
 COPY config/* ${AIRFLOW_HOME}/config/
 
+RUN mkdir -p ${AIRFLOW_HOME}/spark_apps && chmod +x -R ${AIRFLOW_HOME}/spark_apps
+
 USER airflow
 
 EXPOSE 9876
@@ -40,5 +42,6 @@ EXPOSE 9876
 RUN pip install --user -r /tmp/requirements.txt
 
 COPY dags/* ${AIRFLOW_HOME}/dags/
+COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
 
 ENV PYTHONPATH "${PYTHONPATH}:${AIRFLOW_HOME}"
