@@ -45,3 +45,8 @@ COPY dags/* ${AIRFLOW_HOME}/dags/
 COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
 
 ENV PYTHONPATH "${PYTHONPATH}:${AIRFLOW_HOME}"
+ENV SPARK_DOCKER_IMAGE="splicemachine/sm_k8_spark-3.0.0:latest"
+ENV SPLICE_REL_NAME="splicedb"
+ENV SPLICE_NAMESPACE="test"
+ENV TZ="UTC"
+ENV SPLICE_KAFKA_HOST="splicedb-kafka.test.svc.cluster.local"

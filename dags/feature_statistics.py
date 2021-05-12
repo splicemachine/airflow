@@ -44,7 +44,7 @@ for fset, args in fsets.items():
         default_args=default_args,
         description=f'Calculate feature statistics for features in {fset}',
         # schedule_interval='@daily',
-        start_date=days_ago(1),
+        start_date=days_ago(0),
         catchup=False,
         tags=['statistics'],
         **args
@@ -52,12 +52,12 @@ for fset, args in fsets.items():
 
     with dag:
         env = {
-            'SPLICE_JUPYTER_USER': env_vars['DB_USER'],
-            'SPLICE_JUPYTER_PASSWORD': env_vars['DB_PASSWORD'],
-            'SPLICE_DB_HOST': env_vars['DB_HOST'],
-            'SPLICE_KAFKA_HOST': env_vars['SPLICE_KAFKA_HOST'],
+            'SPLICE_JUPYTER_USER': env_vars.get('SPLICE_JUPYTER_USER') or env_vars.get('DB_USER'),
+            'SPLICE_JUPYTER_PASSWORD': env_vars.get('SPLICE_JUPYTER_PASSWORD') or env_vars.get('DB_PASSWORD'),
+            'SPLICE_DB_HOST': env_vars.get('SPLICE_DB_HOST') or env_vars.get('DB_HOST'),
+            'SPLICE_KAFKA_HOST': env_vars.get('SPLICE_KAFKA_HOST')
         }
-        
+
         calculate_statistics_task = SparkSubmitOperator(
             application="/opt/airflow/spark_apps/calculate_feature_statistics.py", 
             task_id="calculate_statistics",

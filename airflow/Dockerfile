@@ -59,7 +59,7 @@ COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
 
 ENV PYTHONPATH "${PYTHONPATH}:/opt/airflow"
 
-ENV AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG=0.0.5_mn018
+ENV AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG=0.0.5_mn019
 ENV AIRFLOW__KUBERNETES__DELETE_WORKER_PODS=False
 ENV SPARK_HOST="k8s://kubernetes.default.svc.cluster.local"
 ENV SPARK_PORT=443
@@ -68,3 +68,4 @@ ENV SPARK_DOCKER_IMAGE="splicemachine/sm_k8_spark-3.0.0:latest"
 ENV SPLICE_REL_NAME="splicedb"
 ENV SPLICE_NAMESPACE="test"
 ENV TZ="UTC"
+ENV SPLICE_KAFKA_HOST="splicedb-kafka.test.svc.cluster.local"
