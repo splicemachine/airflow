@@ -13,7 +13,7 @@ spark_defaults = {
         "spark.executorEnv.RELEASE_NAME": env_vars['SPLICE_REL_NAME'],
         "spark.kubernetes.driver.label.release": env_vars['SPLICE_REL_NAME'],
         "spark.kubernetes.executor.label.component": "sparkexec",
-        "spark.kubernetes.namespace": env_vars['SPLICE_NAMEPACE'],
+        "spark.kubernetes.namespace": env_vars['SPLICE_NAMESPACE'],
         "spark.executorEnv.TZ": env_vars['TZ'],
         "spark.blacklist.enabled": False
     }

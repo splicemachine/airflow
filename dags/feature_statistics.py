@@ -1,5 +1,5 @@
 from datetime import timedelta
-import os
+from os import environ as env_vars
 
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
@@ -51,11 +51,18 @@ for fset, args in fsets.items():
     )
 
     with dag:
+        env = {
+            'SPLICE_JUPYTER_USER': env_vars['DB_USER'],
+            'SPLICE_JUPYTER_PASSWORD': env_vars['DB_PASSWORD'],
+            'SPLICE_DB_HOST': env_vars['DB_HOST'],
+            'SPLICE_KAFKA_HOST': env_vars['SPLICE_KAFKA_HOST'],
+        }
+        
         calculate_statistics_task = SparkSubmitOperator(
             application="/opt/airflow/spark_apps/calculate_feature_statistics.py", 
             task_id="calculate_statistics",
             conn_id="splice_spark",
-            env_vars={k: os.environ[k] for k in ['SPLICE_JUPYTER_USER', 'SPLICE_JUPYTER_PASSWORD', 'SPLICE_DB_HOST', 'SPLICE_KAFKA_HOST']},
+            env_vars=env,
             application_args=[fset],
             **spark_defaults
             # conf={"spark.driver.extraJavaOptions": "-Dlog4j.configuration=file:spark.log4j.properties"},
