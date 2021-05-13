@@ -12,6 +12,7 @@ COPY airflow-worker/build/spark_config/* ${SPARK_CONF_DIR}/
 
 RUN apt-get update && apt-get install --yes \
     sudo \
+    git \
     gcc \
     g++ \
     build-essential \
