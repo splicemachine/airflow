@@ -1,4 +1,4 @@
-FROM apache/airflow:2.0.1
+FROM apache/airflow:2.0.1-python3.7
 USER root
 
 ARG sm_version=3.1.0.2002
@@ -12,8 +12,6 @@ COPY airflow-worker/build/spark_config/* ${SPARK_CONF_DIR}/
 
 RUN apt-get update && apt-get install --yes \
     sudo \
-    git \
-    vim \
     gcc \
     g++ \
     build-essential \
@@ -21,9 +19,7 @@ RUN apt-get update && apt-get install --yes \
     libffi-dev \
     unixodbc \
     unixodbc-dev \
-    iodbc \
-    python3-dev \
-    python3-distutils 
+    iodbc
 
 RUN \
     curl --insecure -o jdk-8u121-linux-x64.tar.gz https://s3.amazonaws.com/splice-jdks/jdk-8u121-linux-x64.tar.gz && \
@@ -37,15 +33,12 @@ COPY config/* ${AIRFLOW_HOME}/config/
 
 RUN mkdir -p ${AIRFLOW_HOME}/spark_apps && chmod +x -R ${AIRFLOW_HOME}/spark_apps
 
-RUN update-alternatives --install /usr/local/bin/python python /usr/bin/python3.7 1
-
 USER airflow
 
 EXPOSE 9876
 
 #Python Package Dependencies for Airflow
-RUN curl https://bootstrap.pypa.io/get-pip.py | python -  && \
-    pip install --user -r /tmp/requirements.txt
+RUN pip install --user -r /tmp/requirements.txt
 
 COPY dags/* ${AIRFLOW_HOME}/dags/
 COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
