@@ -6,7 +6,7 @@ sqlalchemy
 psycopg2-binary
 pymysql
 splicemachinesa
-pyspark==3.0.0
+pyspark==3.0.1
 retrying
 git+https://github.com/splicemachine/pysplice.git
 apache-airflow-providers-apache-spark

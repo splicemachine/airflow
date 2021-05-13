@@ -21,7 +21,9 @@ RUN apt-get update && apt-get install --yes \
     libffi-dev \
     unixodbc \
     unixodbc-dev \
-    iodbc
+    iodbc \
+    python3-dev \
+    python3-distutils 
 
 RUN \
     curl --insecure -o jdk-8u121-linux-x64.tar.gz https://s3.amazonaws.com/splice-jdks/jdk-8u121-linux-x64.tar.gz && \
@@ -35,11 +37,15 @@ COPY config/* ${AIRFLOW_HOME}/config/
 
 RUN mkdir -p ${AIRFLOW_HOME}/spark_apps && chmod +x -R ${AIRFLOW_HOME}/spark_apps
 
+RUN update-alternatives --install /usr/local/bin/python python /usr/bin/python3.7 1
+
 USER airflow
 
 EXPOSE 9876
+
 #Python Package Dependencies for Airflow
-RUN pip install --user -r /tmp/requirements.txt
+RUN curl https://bootstrap.pypa.io/get-pip.py | python -  && \
+    pip install --user -r /tmp/requirements.txt
 
 COPY dags/* ${AIRFLOW_HOME}/dags/
 COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
