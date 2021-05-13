@@ -1,4 +1,4 @@
-from os import environ as env_vars
+from os import environ as env_vars, popen
 from pyspark.sql import SparkSession
 from splicemachine.spark import ExtPySpliceContext
 from splicemachine.features import FeatureStore
@@ -11,7 +11,11 @@ import numpy as np
 import pandas as pd
 import json
 
-spark = SparkSession.builder.config('spark.kubernetes.driver.pod.name', env_vars['POD_NAME']).getOrCreate()
+spark = SparkSession.builder.\
+        config('spark.kubernetes.driver.pod.name', env_vars['POD_NAME']).\
+        config('spark.driver.host', popen('hostname -i').read().strip()).\
+        getOrCreate()
+spark.sparkContext.setLogLevel('warn')
 
 def calculate_statistics(fset):
     user = env_vars['SPLICE_JUPYTER_USER']
