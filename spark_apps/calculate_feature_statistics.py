@@ -15,7 +15,7 @@ spark = SparkSession.builder.\
         config('spark.kubernetes.driver.pod.name', env_vars['POD_NAME']).\
         config('spark.driver.host', popen('hostname -i').read().strip()).\
         getOrCreate()
-spark.sparkContext.setLogLevel('warn')
+# spark.sparkContext.setLogLevel('warn')
 
 def calculate_statistics(fset):
     user = env_vars['SPLICE_JUPYTER_USER']
@@ -39,31 +39,31 @@ def calculate_statistics(fset):
     
     for feature in features:
         name = feature.name
-        id = feature.feature_id
-        count = df.select(df[name]).count()
+        f_id = feature.feature_id
+        count = df.select(name).count()
 
-        sql = f'select feature_histogram from featurestore.feature_stats where feature_id = {id} order by last_update_ts desc {{limit 1}}'
+        sql = f'select feature_histogram from featurestore.feature_stats where feature_id = {f_id} order by last_update_ts desc {{limit 1}}'
         previous = splice.df(sql)
         if previous.count() == 0:
             iqr = reduce(lambda x,y: x-y, df.approxQuantile(name, [0.75, 0.25], 0))
             bin_width = int(2 * (iqr / (count ** (1. / 3))))
-            min = df.select(F.min(df[name])).first()[0]
-            max = df.select(F.max(df[name])).first()[0]
-            if min == max:
+            f_min = df.select(F.min(df[name])).first()[0]
+            f_max = df.select(F.max(df[name])).first()[0]
+            if f_min == f_max:
                 bins = []
             elif bin_width > 0:
-                bins = list(np.arange(min, max, bin_width))
+                bins = list(np.arange(f_min, f_max, bin_width))
             else:
-                bins = list(np.linspace(min, max, 10, False))
-            bins = [float('-inf')] + bins + [max, float('inf')]
-            histogram = pandas_histogram(df.select(name), bins=bins).to_json()
+                bins = list(np.linspace(f_min, f_max, 10, False))
+            bins = [float('-inf')] + bins + [f_max, float('inf')]
+            histogram = pandas_histogram(df.select(name), bins=bins)[name].to_json()
         else:
-            old = json.loads(previous.first()[0])[name]
+            old = json.loads(previous.first()[0])
             intervals = set()
             [intervals.update(key.split(' - ')) for key in old.keys()]
             bins = [float(interval) for interval in list(intervals)]
             bins.sort()
-            histogram = pandas_histogram(df.select(name), bins=bins).to_json()
+            histogram = pandas_histogram(df.select(name), bins=bins)[name].to_json()
 
         cardinality = df.select(name).distinct().count()
         mean = df.select(F.avg(df[name])).first()[0]
@@ -71,7 +71,7 @@ def calculate_statistics(fset):
         stddev = df.select(F.stddev(df[name])).first()[0]
 
         row = {
-            'feature_id': id,
+            'feature_id': f_id,
             'feature_cardinality': cardinality,
             'feature_histogram': histogram,
             'feature_mean': mean,
@@ -85,7 +85,7 @@ def calculate_statistics(fset):
 
     stats_df = splice.createDataFrame(stats, None)
     splice.insert(stats_df, 'FEATURESTORE.FEATURE_STATS', to_upper=False)
-    spark.stop()
+    # spark.stop()
 
 def main():
     fset = sys.argv[1]

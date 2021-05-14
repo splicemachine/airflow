@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from os import environ as env_vars, path
 import json
 
@@ -40,12 +40,13 @@ default_args = {
 fsets = Variable.get('feature_sets', deserialize_json=True, default_var={})
 for fset, args in fsets.items():
     dag_id = f'{fset}_Calculate_Feature_Statistics'
+    args['start_date'] = datetime.strptime(args['start_date'], '%Y-%m-%d')
     dag = DAG(
         dag_id,
         default_args=default_args,
         description=f'Calculate feature statistics for features in {fset}',
         # schedule_interval='@daily',
-        start_date=days_ago(0),
+        # start_date=days_ago(0),
         catchup=False,
         tags=['statistics'],
         **args
