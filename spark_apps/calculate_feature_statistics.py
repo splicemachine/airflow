@@ -85,7 +85,7 @@ def calculate_statistics(fset):
 
     stats_df = splice.createDataFrame(stats, None)
     splice.insert(stats_df, 'FEATURESTORE.FEATURE_STATS', to_upper=False)
-    # spark.stop()
+    spark.stop()
 
 def main():
     fset = sys.argv[1]
