@@ -2,6 +2,7 @@ from os import environ as env_vars, popen
 from pyspark.sql import SparkSession
 from splicemachine.spark import ExtPySpliceContext
 from splicemachine.features import FeatureStore
+from splicemachine.features.constants import FeatureType
 from pyspark_dist_explore import pandas_histogram
 import pyspark.sql.functions as F
 from datetime import datetime
@@ -10,12 +11,18 @@ from functools import reduce
 import numpy as np
 import pandas as pd
 import json
+import logging
 
 spark = SparkSession.builder.\
         config('spark.kubernetes.driver.pod.name', env_vars['POD_NAME']).\
         config('spark.driver.host', popen('hostname -i').read().strip()).\
         getOrCreate()
-# spark.sparkContext.setLogLevel('warn')
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+sc = spark.sparkContext
+sc.setLogLevel('INFO')
+log4jLogger = sc._jvm.org.apache.log4j
+LOGGER = log4jLogger.LogManager.getLogger(__name__)
+LOGGER.info("pyspark script logger initialized")
 
 def calculate_statistics(fset):
     user = env_vars['SPLICE_JUPYTER_USER']
@@ -25,12 +32,14 @@ def calculate_statistics(fset):
 
     splice = ExtPySpliceContext(spark, JDBC_URL=f'jdbc:splice://{db_host}:1527/splicedb;user={user};password={password}', kafkaServers=f'{kafka_host}:9092')
 
+    LOGGER.info(f"Pulling data from feature set '{fset}'")
     df = splice.df(f'select * from {fset}')
 
     schema, table = fset.split('.')
 
     fs = FeatureStore()
 
+    LOGGER.info(f"Getting features in feature set '{fset}'")
     features = fs.get_features_from_feature_set(schema, table)
 
     stats = pd.DataFrame(columns=['feature_id', 'feature_cardinality', 'feature_histogram', 'feature_mean', 
@@ -40,6 +49,12 @@ def calculate_statistics(fset):
     for feature in features:
         name = feature.name
         f_id = feature.feature_id
+
+        if feature.feature_type != FeatureType.continuous:
+            LOGGER.info(f"Statistics for feature '{name}' cannot be calculated because the feature is not continuous - skipping")
+            continue
+
+        LOGGER.info(f"Calculating statistics for feature '{name}'")
         count = df.select(name).count()
 
         sql = f'select feature_histogram from featurestore.feature_stats where feature_id = {f_id} order by last_update_ts desc {{limit 1}}'
@@ -81,10 +96,14 @@ def calculate_statistics(fset):
             'last_update_ts': update_time,
             'last_update_username': ''
         }
+        LOGGER.info(f"Statistics calculated for feature '{name}' - adding to DataFrame")
         stats = stats.append(row, ignore_index=True)
-
+    LOGGER.info(f"Statistics calculated for all features")
     stats_df = splice.createDataFrame(stats, None)
+    LOGGER.info(f"Pushing statistics to FeatureStore.Feature_Stats")
     splice.insert(stats_df, 'FEATURESTORE.FEATURE_STATS', to_upper=False)
+    LOGGER.info(f"Statistics pushed to database")
+    LOGGER.info('Exit code: 0')
     spark.stop()
 
 def main():
