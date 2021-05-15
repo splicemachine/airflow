@@ -92,7 +92,7 @@ def calculate_statistics(fset):
     cols = list(stats.columns)[1:]
     stats[cols] = stats[cols].apply(pd.to_numeric, errors='coerce')
 
-    stats['feature'] = stats.apply(lambda row: next((f for f in features if f.name.upper() == row['index'].upper()), None), axis=1)
+    stats['feature'] = stats.apply(lambda row: next((f for f in features if f.name.upper() == row['name'].upper()), None), axis=1)
     stats['feature_id'] = stats.apply(lambda row: row['feature'].feature_id, axis=1)
     stats['feature_cardinality'] = stats.apply(lambda row: cardinality(row, df), axis=1)
     stats['feature_histogram'] = stats.apply(lambda row: histogram(row, df, splice), axis=1)
