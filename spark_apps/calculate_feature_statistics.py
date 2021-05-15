@@ -21,7 +21,7 @@ LOGGER = log4jLogger.LogManager.getLogger(__name__)
 LOGGER.warn("pyspark script logger initialized")
 
 def cardinality(row, df):
-    name = row['index']
+    name = row['name']
     if row['feature'].is_continuous():
         LOGGER.warn(f'Cannot calculate cardinality for column {name} - cardinality not supported for continuous data types')
         return None
@@ -29,7 +29,7 @@ def cardinality(row, df):
         df.select(name).distinct().count()
 
 def histogram(row, df, splice):
-    name = row['index']
+    name = row['name']
     feature = row['feature']
     f_id = row['feature_id']
 

@@ -7,9 +7,8 @@ from airflow import DAG
 
 # Operators; we need this to operate!
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-from airflow.utils.dates import days_ago
 from airflow.models import Variable
-from airflow.decorators import dag, task
+from airflow.decorators import dag
 from config.spark_config import spark_defaults
 
 # These args will get passed on to each operator
@@ -46,7 +45,7 @@ for fset, args in fsets.items():
         default_args=default_args,
         description=f'Calculate feature statistics for features in {fset}',
         # schedule_interval='@daily',
-        # start_date=days_ago(0),
+        # start_date=days_ago(1),
         catchup=False,
         tags=['statistics'],
         **args
@@ -75,8 +74,6 @@ for fset, args in fsets.items():
             application_args=[fset],
             **spark_defaults,
             **extra_conf
-            # conf={"spark.driver.extraJavaOptions": "-Dlog4j.configuration=file:spark.log4j.properties"},
-            # files="/etc/spark/conf/spark.log4j.properties"
         )
 
     globals()[dag_id] = dag
