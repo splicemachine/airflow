@@ -1,4 +1,5 @@
 from os import environ as env_vars, popen
+from re import L
 from pyspark.sql import SparkSession
 from splicemachine.spark import ExtPySpliceContext
 from splicemachine.features import FeatureStore
@@ -61,14 +62,7 @@ def retrieve_source(splice, name: str = None, source_id: int = None):
                 )
     return source_def
 
-def run_incremental_pipeline(fset: str):
-    user = env_vars['SPLICE_JUPYTER_USER']
-    password = env_vars['SPLICE_JUPYTER_PASSWORD']
-    db_host = env_vars['SPLICE_DB_HOST']
-    kafka_host = env_vars['SPLICE_KAFKA_HOST']
-
-    splice = ExtPySpliceContext(spark, JDBC_URL=f'jdbc:splice://{db_host}:1527/splicedb;user={user};password={password}', kafkaServers=f'{kafka_host}:9092')
-    
+def run_incremental_pipeline(fset: str, splice):
     schema_name, table_name = [name.upper() for name in fset.split('.')]
 
     fs = FeatureStore()
@@ -105,13 +99,29 @@ def run_incremental_pipeline(fset: str):
     sql = f"""INSERT INTO featurestore.pipeline_ops( FEATURE_SET_ID, EXTRACT_UP_TO_TS ) --splice-properties insertMode=UPSERT
             VALUES({pipeline['FEATURE_SET_ID']}, timestamp('{max_update_ts}'))"""
     splice.execute(sql)
-    # This log is necessary for airflow to recognize successful executions
-    LOGGER.warn('Exit code: 0')
-    spark.stop()
 
 def main():
+    user = env_vars['SPLICE_JUPYTER_USER']
+    password = env_vars['SPLICE_JUPYTER_PASSWORD']
+    db_host = env_vars['SPLICE_DB_HOST']
+    kafka_host = env_vars['SPLICE_KAFKA_HOST']
+
+    splice = ExtPySpliceContext(spark, JDBC_URL=f'jdbc:splice://{db_host}:1527/splicedb;user={user};password={password}', kafkaServers=f'{kafka_host}:9092')
+    splice.setAutoCommitOff()
+    
     fset = sys.argv[1]
-    run_incremental_pipeline(fset)
+    try:
+        run_incremental_pipeline(fset, splice)
+        splice.commit()
+        # This log is necessary for airflow to recognize successful executions
+        LOGGER.warn('Exit code: 0')
+    except Exception as e:
+        LOGGER.error(e)
+        LOGGER.warn('Rolling back...')
+        splice.rollback()
+        raise e
+    finally:
+        spark.stop()
 
 if __name__ == '__main__':
     main()

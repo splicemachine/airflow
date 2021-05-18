@@ -67,14 +67,7 @@ def histogram(row, df, splice):
             histogram = histogram / np.sum(histogram)
             return json.dumps(histogram.to_dict()['count'])
 
-def calculate_statistics(fset):
-    user = env_vars['SPLICE_JUPYTER_USER']
-    password = env_vars['SPLICE_JUPYTER_PASSWORD']
-    db_host = env_vars['SPLICE_DB_HOST']
-    kafka_host = env_vars['SPLICE_KAFKA_HOST']
-
-    splice = ExtPySpliceContext(spark, JDBC_URL=f'jdbc:splice://{db_host}:1527/splicedb;user={user};password={password}', kafkaServers=f'{kafka_host}:9092')
-
+def calculate_statistics(fset, splice):
     LOGGER.warn(f"Pulling data from feature set '{fset}'")
     df = splice.df(f'select * from {fset}')
 
@@ -120,13 +113,29 @@ def calculate_statistics(fset):
     LOGGER.warn(f"Pushing statistics to FeatureStore.Feature_Stats")
     splice.insert(stats_df, 'FEATURESTORE.FEATURE_STATS')
     LOGGER.warn(f"Statistics pushed to database")
-    # This log is necessary for airflow to recognize successful executions
-    LOGGER.warn('Exit code: 0')
-    spark.stop()
 
 def main():
+    user = env_vars['SPLICE_JUPYTER_USER']
+    password = env_vars['SPLICE_JUPYTER_PASSWORD']
+    db_host = env_vars['SPLICE_DB_HOST']
+    kafka_host = env_vars['SPLICE_KAFKA_HOST']
+
+    splice = ExtPySpliceContext(spark, JDBC_URL=f'jdbc:splice://{db_host}:1527/splicedb;user={user};password={password}', kafkaServers=f'{kafka_host}:9092')
+    splice.setAutoCommitOff()
+    
     fset = sys.argv[1]
-    calculate_statistics(fset)
+    try:
+        calculate_statistics(fset, splice)
+        splice.commit()
+        # This log is necessary for airflow to recognize successful executions
+        LOGGER.warn('Exit code: 0')
+    except Exception as e:
+        LOGGER.error(e)
+        LOGGER.warn('Rolling back...')
+        splice.rollback()
+        raise e
+    finally:
+        spark.stop()
 
 if __name__ == '__main__':
     main()
