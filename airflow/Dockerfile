@@ -58,5 +58,3 @@ COPY dags/* ${AIRFLOW_HOME}/dags/
 COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
 
 ENV PYTHONPATH "${PYTHONPATH}:/opt/airflow"
-
-ENV AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG=0.0.5_mn002

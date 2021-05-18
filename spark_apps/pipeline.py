@@ -1,5 +1,4 @@
 from os import environ as env_vars, popen
-from re import L
 from pyspark.sql import SparkSession
 from splicemachine.spark import ExtPySpliceContext
 from splicemachine.features import FeatureStore
