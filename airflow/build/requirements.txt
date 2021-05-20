@@ -18,3 +18,5 @@ apache-airflow-backport-providers-elasticsearch
 werkzeug==0.16.0
 retrying
 apache-airflow-providers-apache-spark
+git+https://github.com/splicemachine/pysplice.git
+python-dateutil
