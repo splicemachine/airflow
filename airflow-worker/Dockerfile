@@ -1,4 +1,4 @@
-FROM apache/airflow:2.0.1
+FROM apache/airflow:2.0.1-python3.7
 USER root
 
 ARG sm_version=3.1.0.2002
@@ -13,7 +13,6 @@ COPY airflow-worker/build/spark_config/* ${SPARK_CONF_DIR}/
 RUN apt-get update && apt-get install --yes \
     sudo \
     git \
-    vim \
     gcc \
     g++ \
     build-essential \
@@ -33,12 +32,16 @@ RUN \
 COPY airflow-worker/build/requirements.txt /tmp/requirements.txt
 COPY config/* ${AIRFLOW_HOME}/config/
 
+RUN mkdir -p ${AIRFLOW_HOME}/spark_apps && chmod +x -R ${AIRFLOW_HOME}/spark_apps
+
 USER airflow
 
 EXPOSE 9876
+
 #Python Package Dependencies for Airflow
 RUN pip install --user -r /tmp/requirements.txt
 
 COPY dags/* ${AIRFLOW_HOME}/dags/
+COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
 
 ENV PYTHONPATH "${PYTHONPATH}:${AIRFLOW_HOME}"

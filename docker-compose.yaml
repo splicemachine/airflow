@@ -59,9 +59,12 @@ x-airflow-common:
     SPLICE_JUPYTER_USER: mlmanager
     SPLICE_JUPYTER_PASSWORD: admin
     SPLICE_DB_HOST: host.docker.internal
+    SPLICE_KAFKA_HOST: host.docker.internal
     FS_URL: "http://host.docker.internal:8000"
+    SPARK_HOST: "local"
   volumes:
     - ./dags:/opt/airflow/dags
+    - ./spark_apps:/opt/airflow/spark_apps
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
