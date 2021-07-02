@@ -1,4 +1,4 @@
-FROM apache/airflow:2.0.1-python3.7
+FROM apache/airflow:2.1.0-python3.7
 USER root
 
 ARG sm_version=3.1.0.2002

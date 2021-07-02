@@ -1,4 +1,4 @@
-FROM apache/airflow:2.0.1
+FROM apache/airflow:2.1.0-python3.7
 USER root
 
 ENV SRC_HOME=/opt/airflow
@@ -58,4 +58,4 @@ COPY dags/* ${AIRFLOW_HOME}/dags/
 COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
 
 ENV PYTHONPATH "${PYTHONPATH}:/opt/airflow"
-ENV AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG 0.0.5_mn001
+ENV AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG 0.0.5_mn003
