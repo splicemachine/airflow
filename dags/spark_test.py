@@ -1,11 +1,11 @@
 from datetime import timedelta
-from retrying import retry
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
 
 # Operators; we need this to operate!
 from airflow.utils.dates import days_ago
-from airflow.decorators import dag, task
+from airflow.decorators import dag
+from airflow.operators.python import PythonVirtualenvOperator
 # These args will get passed on to each operator
 # You can override them on a per-task basis during operator initialization
 default_args = {
@@ -31,7 +31,6 @@ default_args = {
     # 'trigger_rule': 'all_success'
 }
 
-@task
 def run_spark():
     from os import environ as env_vars, popen, path
     import json
@@ -68,4 +67,10 @@ dag = DAG(
 )
 
 with dag:
-    run_spark()        
+    task =  PythonVirtualenvOperator(
+        task_id='show_df',
+        python_callable=run_spark,
+        python_version='3.7.3',
+        requirements=['dill'],
+        use_dill=True
+    )
