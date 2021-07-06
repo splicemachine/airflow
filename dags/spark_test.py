@@ -70,7 +70,7 @@ with dag:
     task =  PythonVirtualenvOperator(
         task_id='show_df',
         python_callable=run_spark,
-        python_version='3.7.3',
+        python_version='3.7',
         requirements=['dill'],
         use_dill=True
     )
