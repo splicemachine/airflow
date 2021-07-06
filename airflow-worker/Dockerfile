@@ -39,7 +39,7 @@ USER airflow
 EXPOSE 9876
 
 #Python Package Dependencies for Airflow
-RUN pip install --user -r /tmp/requirements.txt && pip cache purge
+RUN pip install --upgrade pip setuptools && pip install --user -r /tmp/requirements.txt && pip cache purge
 COPY dags/* ${AIRFLOW_HOME}/dags/
 COPY spark_apps/* ${AIRFLOW_HOME}/spark_apps/
 

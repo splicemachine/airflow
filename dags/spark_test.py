@@ -1,12 +1,11 @@
 from datetime import timedelta
 from retrying import retry
 # The DAG object; we'll need this to instantiate a DAG
-from airflow import DAG, AirflowException
+from airflow import DAG
 
 # Operators; we need this to operate!
-from airflow.operators.python import task, get_current_context
 from airflow.utils.dates import days_ago
-from airflow.decorators import dag
+from airflow.decorators import dag, task
 # These args will get passed on to each operator
 # You can override them on a per-task basis during operator initialization
 default_args = {
@@ -34,9 +33,25 @@ default_args = {
 
 @task
 def run_spark():
+    from os import environ as env_vars, popen, path
+    import json
     from pyspark.sql import SparkSession
     # eNSDS_jar = 'https://splice-releases.s3.amazonaws.com/3.1.0.2009/cluster/nsds/splice_spark2-3.1.0.2009-shaded-dbaas3.0.jar'
-    spark = SparkSession.builder.getOrCreate()
+    conf_path = '/mnt/airflow-conf/extra_spark_config.json'
+    if path.exists(conf_path):
+        with open(conf_path) as f:
+            extra_conf = json.load(f)
+    else:
+        extra_conf = {}
+
+    spark = SparkSession.builder.\
+        config('spark.kubernetes.driver.pod.name', env_vars['POD_NAME']).\
+        config('spark.driver.host', popen('hostname -i').read().strip()).\
+        config('spark.files', extra_conf['files'])
+    for key, value in extra_conf['conf'].items():
+        spark = spark.config(key, value)
+    spark = spark.getOrCreate()
+
     import pandas as pd
     pdf = pd.DataFrame([[1,'foo'],[2,'bar'],[3,'baz']])
     df = spark.createDataFrame(pdf)
