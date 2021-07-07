@@ -51,7 +51,7 @@ def run_spark():
         config('spark.files', extra_conf['files'])
     for key, value in extra_conf['conf'].items():
         spark = spark.config(key, value)
-    spark = spark.getOrCreate()
+    spark = spark.config('spark.pyspark.driver.python', 'python3').getOrCreate()
     import time
     time.sleep(600)
     import logging
