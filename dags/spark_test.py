@@ -36,6 +36,8 @@ def run_spark():
     import json
     from pyspark.sql import SparkSession
     # eNSDS_jar = 'https://splice-releases.s3.amazonaws.com/3.1.0.2009/cluster/nsds/splice_spark2-3.1.0.2009-shaded-dbaas3.0.jar'
+    env_vars['PYSPARK_PYTHON'] = 'python3'
+    env_vars['PYSPARK_DRIVER_PYTHON'] = 'python3'
     conf_path = '/mnt/airflow-conf/extra_spark_config.json'
     if path.exists(conf_path):
         with open(conf_path) as f:
@@ -50,6 +52,8 @@ def run_spark():
     for key, value in extra_conf['conf'].items():
         spark = spark.config(key, value)
     spark = spark.getOrCreate()
+    import time
+    time.sleep(600)
     import logging
     import sys
     logging.basicConfig(stream=sys.stdout, level=logging.WARN)
@@ -63,6 +67,7 @@ def run_spark():
     import pandas as pd
     pdf = pd.DataFrame([[1,'foo'],[2,'bar'],[3,'baz']])
     df = spark.createDataFrame(pdf)
+
     df.show()
     df.collect()
 
