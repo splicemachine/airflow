@@ -50,8 +50,15 @@ def run_spark():
     for key, value in extra_conf['conf'].items():
         spark = spark.config(key, value)
     spark = spark.getOrCreate()
+    import logging
+    import sys
+    logging.basicConfig(stream=sys.stdout, level=logging.WARN)
+    sc = spark.sparkContext
+    log4jLogger = sc._jvm.org.apache.log4j
+    LOGGER = log4jLogger.LogManager.getLogger(__name__)
+    LOGGER.warn("pyspark script logger initialized")
 
-    print(spark.sparkContext.getConf().getAll())
+    LOGGER.warn(str(spark.sparkContext.getConf().getAll()))
 
     import pandas as pd
     pdf = pd.DataFrame([[1,'foo'],[2,'bar'],[3,'baz']])
