@@ -51,6 +51,8 @@ def run_spark():
         spark = spark.config(key, value)
     spark = spark.getOrCreate()
 
+    print(spark.sparkContext.getConf().getAll())
+
     import pandas as pd
     pdf = pd.DataFrame([[1,'foo'],[2,'bar'],[3,'baz']])
     df = spark.createDataFrame(pdf)
@@ -67,7 +69,7 @@ dag = DAG(
 )
 
 with dag:
-    task =  PythonVirtualenvOperator(
+    task = PythonVirtualenvOperator(
         task_id='show_df',
         python_callable=run_spark,
         python_version='3.7',
