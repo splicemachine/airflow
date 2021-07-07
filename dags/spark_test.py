@@ -53,7 +53,6 @@ def run_spark():
         spark = spark.config(key, value)
     spark = spark.config('spark.pyspark.driver.python', 'python3').getOrCreate()
     import time
-    time.sleep(600)
     import logging
     import sys
     logging.basicConfig(stream=sys.stdout, level=logging.WARN)
@@ -70,6 +69,15 @@ def run_spark():
 
     df.show()
     df.collect()
+
+    from splicemachine.spark import ExtPySpliceContext
+    db_host = env_vars.get('SPLICE_DB_HOST')
+    user = env_vars.get('SPLICE_JUPYTER_USER')
+    password = env_vars.get('SPLICE_JUPYTER_PASSWORD')
+    kafka_host = env_vars.get('SPLICE_KAFKA_HOST')
+    splice = ExtPySpliceContext(spark, JDBC_URL=f'jdbc:splice://{db_host}:1527/splicedb;user={user};password={password}', kafkaServers=f'{kafka_host}:9092')
+    splice.df('select * from sys.systables').show()
+
 
 dag = DAG(
     'Spark_Test',
