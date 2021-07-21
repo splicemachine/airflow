@@ -8,5 +8,8 @@ pymysql==1.0.2
 splicemachinesa>=0.4.2
 pyspark==3.0.1
 retrying==1.3.3
-git+https://github.com/splicemachine/pysplice.git
+git+https://github.com/splicemachine/pysplice.git@DBAAS-5579
+splicemachine[stats]
 apache-airflow-providers-apache-spark==2.0.0
+ipython
+matplotlib

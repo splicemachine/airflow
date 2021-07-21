@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import json
 import logging
+import re
 
 spark = SparkSession.builder.\
         config('spark.kubernetes.driver.pod.name', env_vars['POD_NAME']).\
@@ -67,11 +68,12 @@ def histogram(row, df, splice):
             histogram = histogram / np.sum(histogram)
             return json.dumps(histogram.to_dict()['count'])
 
-def calculate_statistics(fset, splice):
+def calculate_statistics(fset, fsid, fsv, splice):
     LOGGER.warn(f"Pulling data from feature set '{fset}'")
     df = splice.df(f'select * from {fset}')
 
     schema, table = fset.split('.')
+    table = re.sub(f'_v{fsv}$', '', table)
 
     fs = FeatureStore()
 
@@ -82,6 +84,11 @@ def calculate_statistics(fset, splice):
     
     stats = df.select([f.name for f in features]).summary().toPandas().\
         set_index('summary').T.rename_axis('name').rename_axis(None, axis=1).reset_index()
+
+    if not int(max(stats['count'])):
+        print('nothing to see here')
+        return
+    
     cols = list(stats.columns)[1:]
     stats[cols] = stats[cols].apply(pd.to_numeric, errors='coerce')
 
@@ -101,6 +108,8 @@ def calculate_statistics(fset, splice):
         'max': 'feature_max'
     }
     stats.rename(columns=rename, inplace=True)
+    stats['feature_set_id'] = fsid
+    stats['feature_set_version'] = fsv
     stats['last_update_ts'] = update_time
     stats['last_update_username'] = 'airflow'
     stats.rename(columns=str.upper, inplace=True)
@@ -124,13 +133,15 @@ def main():
     splice.setAutoCommitOff()
     
     fset = sys.argv[1]
+    fsid = sys.argv[2]
+    fsv = sys.argv[3]
     try:
-        calculate_statistics(fset, splice)
+        calculate_statistics(fset, fsid, fsv, splice)
         splice.commit()
         # This log is necessary for airflow to recognize successful executions
         LOGGER.warn('Exit code: 0')
     except Exception as e:
-        LOGGER.error(e)
+        LOGGER.error(str(e))
         LOGGER.warn('Rolling back...')
         splice.rollback()
         raise e
